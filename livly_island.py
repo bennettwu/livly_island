@@ -11,99 +11,17 @@ import imutils
 from threading import Thread, Lock
 import math
 import subprocess
-
-class WindowCapture:
-
-    w = 0
-    h = 0
-    hwnd = None
-    cropped_x = 0
-    cropped_y = 0
-    offset_x = 0
-    offset_y = 0
-
-    _mouse_busy = False
-    _mouse_delay = 0
-    _mouse_event = []
-    _mouse_ptr = 0
-
-    def __init__(self, window_name):
-        self.hwnd = win32gui.FindWindow(None, window_name)
-        if not self.hwnd:
-            raise Exception('Window not found: {}'.format(window_name))
-
-        # get the window size
-        window_rect = win32gui.GetWindowRect(self.hwnd)
-        self.w = window_rect[2] - window_rect[0]
-        self.h = window_rect[3] - window_rect[1]
-
-        print(window_rect)
-        print(self.w,self.h)
-        print("window: {} , hwnd = {}".format(window_name, self.hwnd))
-
-        # account for the window border and titlebar and cut them off
-        border_pixels = 2
-        titlebar_pixels = 32
-        border_pixels = 0
-        titlebar_pixels = 0
-
-        #self.w = self.w - (border_pixels * 2)
-        #self.h = self.h - titlebar_pixels - border_pixels
-        print(self.w,self.h)
-
-        #self.w = 720
-        #self.h = 405
-        self.cropped_x = border_pixels
-        self.cropped_y = titlebar_pixels
-
-        # set the cropped coordinates offset so we can translate screenshot
-        # images into actual screen positions
-        self.offset_x = window_rect[0] + self.cropped_x
-        self.offset_y = window_rect[1] + self.cropped_y
-
-
-    def get_screenshot(self):
-        # get the window image data
-        wDC = win32gui.GetWindowDC(self.hwnd)
-        dcObj = win32ui.CreateDCFromHandle(wDC)
-        cDC = dcObj.CreateCompatibleDC()
-        dataBitMap = win32ui.CreateBitmap()
-        dataBitMap.CreateCompatibleBitmap(dcObj, self.w, self.h)
-        cDC.SelectObject(dataBitMap)
-        cDC.BitBlt((0, 0), (self.w, self.h), dcObj, (self.cropped_x, self.cropped_y), win32con.SRCCOPY)
-
-        # convert the raw data into a format opencv can read
-        # dataBitMap.SaveBitmapFile(cDC, 'debug.bmp')
-        signedIntsArray = dataBitMap.GetBitmapBits(True)
-        #img = np.fromstring(signedIntsArray, dtype='uint8')
-        img = np.frombuffer(signedIntsArray, dtype='uint8')
-        img.shape = (self.h, self.w, 4)
-
-        # free resources
-        dcObj.DeleteDC()
-        cDC.DeleteDC()
-        win32gui.ReleaseDC(self.hwnd, wDC)
-        win32gui.DeleteObject(dataBitMap.GetHandle())
-
-        # drop the alpha channel, or cv.matchTemplate() will throw an error like:
-        #   error: (-215:Assertion failed) (depth == CV_8U || depth == CV_32F) && type == _templ.type()
-        #   && _img.dims() <= 2 in function 'cv::matchTemplate'
-        img = img[..., :3]
-
-        # make image C_CONTIGUOUS to avoid errors that look like:
-        #   File ... in draw_rectangles
-        #   TypeError: an integer is required (got type tuple)
-        # see the discussion here:
-        # https://github.com/opencv/opencv/issues/14866#issuecomment-580207109
-        img = np.ascontiguousarray(img)
-
-        return img
+from windowcapture import WindowCapture
 
 
 class   livly_island_matchtemplates:
 
     filelist = []
     imgs = []
+    mx = -1
+    my = -1
+    mw = -1
+    mh = -1
 
     def __init__(self):
         self.filelist = [file for file in os.listdir('.') if file.endswith('.png')]
@@ -119,7 +37,7 @@ class   livly_island_matchtemplates:
         index = self.filelist.index(filename)
         return  self.imgs[index]
 
-    def match(self,img):
+    def matchall(self,img):
 
         for i in range(0, len(self.filelist)):
             src_img = img
@@ -128,7 +46,46 @@ class   livly_island_matchtemplates:
             threshold = float(0.98)
             loc = np.where( res >= threshold)
             for pt in zip(*loc[::-1]):
+                print("{} , {} , {} , w:{} h:{}".format(i, self.filelist[i] , pt , mat_img.shape[1] , mat_img.shape[0] ))
                 cv2.rectangle(src_img, pt, (pt[0] + mat_img.shape[1], pt[1] + mat_img.shape[0]), (0,0,255), 2)
+
+    def match(self,screen,sx,sy,filename,threshold):
+        found = False
+        index = self.filelist.index(filename)
+        mat_img = self.imgs[index]
+        w = mat_img.shape[1]
+        h = mat_img.shape[0]
+        if( sx == -1 or sy == -1 ):
+            src_crop = screen
+        else:
+            src_crop = screen[sy:sy+h,sx:sx+w].copy()
+        res = cv2.matchTemplate(src_crop,mat_img,cv2.TM_CCOEFF_NORMED)
+        loc = np.where( res >= threshold)
+        for pt in zip(*loc[::-1]):
+            x = pt[0]
+            y = pt[1]
+            if (sx == -1 or sy == -1):
+                #cv2.rectangle(self.screen_result, (x, y), ((x + w), (y + h)), (0, 0, 255), 2)
+                self.mx = -1
+                self.my = -1
+                self.mw = w
+                self.mh = h
+                found = True
+            else:
+                #cv2.rectangle(self.screen_result, (sx+x, sy+y), ((sx + x + w), (sy + y + h)), (0,0,255), 2)
+                self.mx = x
+                self.my = y
+                self.mw = w
+                self.mh = h
+                found = True
+        return found
+
+    def match_result(self):
+        return self.mx,self.my,self.mw,self.mh
+
+
+
+
 
 
 if __name__ == '__main__':
@@ -140,13 +97,138 @@ if __name__ == '__main__':
 
     window_name = sys.argv[1]
     
-    game = WindowCapture(window_name)
+    game_window = WindowCapture(window_name)
     game_matchtemplates = livly_island_matchtemplates()
 
+    idle = 0
+    found = 0
+    run = True    
+    debug = True
     while(1):
-        game_screen = game.get_screenshot()
-        game_matchtemplates.match(game_screen)
-        cv2.imshow("cap", cv2.resize(game_screen, (int(game_screen.shape[1] * 0.5), int(game_screen.shape[0] * 0.5)),interpolation=cv2.INTER_AREA) )
+        if( debug == True ):
+            game_screen = game_window.get_screenshot()
+            game_screen_matchall = game_screen.copy()
+            game_matchtemplates.matchall(game_screen_matchall)
+            cv2.imshow("All", cv2.resize(game_screen_matchall, (int(game_screen_matchall.shape[1] * 0.5), int(game_screen_matchall.shape[0] * 0.5)),interpolation=cv2.INTER_AREA) )
+
+        if( run == True ):
+            game_screen_match = game_screen.copy()
+            if( game_matchtemplates.match(game_screen_match,150,598,"點擊並開始.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(150+(w/2),598+(h/2))
+                #print(x,y,w,h,150+(w/2),598+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,153,599,"開始新生活.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                if( game_matchtemplates.match(game_screen_match,220,526,"同意.png",0.9) == True ):
+                    x,y,w,h = game_matchtemplates.match_result()
+                    game_window.click_left_mouse(220+(w/2),526+(h/2))
+                else:
+                    game_window.click_left_mouse(153+(w/2),599+(h/2))
+                #print(x,y,w,h,153+(w/2),599+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,339,127,"下箭頭提示.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(339+(w/2)),int(127+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+            elif( game_matchtemplates.match(game_screen_match,93,649,"開始生活!.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(93+(w/2)),int(649+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+            elif( game_matchtemplates.match(game_screen_match,41,454,"輸入小島名稱.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(41+(w/2)),int(454+(h/2)))
+                time.sleep(5)
+                game_window.input_text("12345678")
+                time.sleep(1)
+                game_window.click_left_mouse(int(354),int(689))    
+                time.sleep(1)
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,43,386,"輸入Livly名稱.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(43+(w/2)),int(386+(h/2)))
+                time.sleep(5)
+                game_window.input_text("12345678")
+                time.sleep(1)
+                game_window.click_left_mouse(int(354),int(689))    
+                time.sleep(1)
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,42,318,"輸入飼主名稱.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(42+(w/2)),int(318+(h/2)))
+                time.sleep(5)
+                game_window.input_text("12345678")
+                time.sleep(1)
+                game_window.click_left_mouse(int(354),int(689))    
+                time.sleep(1)
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,223,380,"是.png",0.98) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(223+(w/2)),int(380+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1                               
+            elif( game_matchtemplates.match(game_screen_match,141,617,"同意飼主條款.png",0.98) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(141+(w/2)),int(617+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1               
+            elif( game_matchtemplates.match(game_screen_match,90,649,"登錄.png",0.98) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(90+(w/2)),int(649+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1               
+            elif( game_matchtemplates.match(game_screen_match,149,635,"前往小島.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(149+(w/2)),int(635+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,90,655,"下一步.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(90+(w/2)),int(655+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,143,183,"請選擇喜歡的個體.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(143+(w/2)),int(183+(h/2)+70))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,88,656,"決定此Livly種類.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(88+(w/2)),int(656+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,92,650,"繼續辨理手續.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(92+(w/2)),int(650+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,91,655,"迎接Livly.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(91+(w/2)),int(655+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            elif( game_matchtemplates.match(game_screen_match,26,340,"APK圖示.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(26+(w/2)),int(340+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            else:
+                found = 0
+                idle += 1
+
+            print(idle,found)
+            
+
+        
+        #cv2.imshow("Matchall", cv2.resize(game_screen, (int(game_screen.shape[1] * 0.5), int(game_screen.shape[0] * 0.5)),interpolation=cv2.INTER_AREA) )
+
         if msvcrt.kbhit():
             ch =msvcrt.getch()
             #print(ch)
@@ -156,7 +238,7 @@ if __name__ == '__main__':
         if key == ord('q'):
             break
 
-        time.sleep(0.2)
+        time.sleep(0.1)
     cv2.destroyAllWindows()        
 
 
