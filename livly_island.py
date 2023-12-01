@@ -78,6 +78,8 @@ class   livly_island_matchtemplates:
                 self.mw = w
                 self.mh = h
                 found = True
+        if( found == True ):
+                print( "{} found {}:{}".format(filename,self.mx+sx,self.my+sy))
         return found
 
     def match_result(self):
@@ -103,7 +105,7 @@ if __name__ == '__main__':
     idle = 0
     found = 0
     run = True    
-    debug = True
+    debug = False
     while(1):
         if( debug == True ):
             game_screen = game_window.get_screenshot()
@@ -112,12 +114,67 @@ if __name__ == '__main__':
             cv2.imshow("All", cv2.resize(game_screen_matchall, (int(game_screen_matchall.shape[1] * 0.5), int(game_screen_matchall.shape[0] * 0.5)),interpolation=cv2.INTER_AREA) )
 
         if( run == True ):
+            game_screen = game_window.get_screenshot()
             game_screen_match = game_screen.copy()
-            if( game_matchtemplates.match(game_screen_match,150,598,"點擊並開始.png",0.9) == True ):
+
+
+            #elixir_00.png , (180, 176)
+            if( game_matchtemplates.match(game_screen_match,180,176,"elixir_00.png",0.8) == True ):
                 x,y,w,h = game_matchtemplates.match_result()
-                game_window.click_left_mouse(150+(w/2),598+(h/2))
+                game_window.click_left_mouse(180+(w/2),176+(h/2))
                 #print(x,y,w,h,150+(w/2),598+(h/2))
                 found += 1
+            # elixir_01.png , (184, 238)
+            if( game_matchtemplates.match(game_screen_match,184,238,"elixir_01.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(184+(w/2),238+(h/2))
+                #print(x,y,w,h,150+(w/2),598+(h/2))
+                found += 1
+
+            # 隨意走elixir.png , (178, 644)
+            if( game_matchtemplates.match(game_screen_match,178,644,"隨意走elixir.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(205,230)   # elixir region
+                time.sleep(1)
+                game_window.click_left_mouse(178+(w/2),644+(h/2))
+                time.sleep(1)
+                #print(x,y,w,h,150+(w/2),598+(h/2))
+                found += 1
+
+            # harvest.png , (175, 172)
+            if( game_matchtemplates.match(game_screen_match,175,172,"harvest.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(175+(w/2),172+(h/2))
+                #print(x,y,w,h,150+(w/2),598+(h/2))
+                found += 1
+
+            #成功採收果實OK.png , (158, 551)
+            if( game_matchtemplates.match(game_screen_match,158,551,"成功採收果實OK.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(158+(w/2),551+(h/2))
+                #print(x,y,w,h,150+(w/2),598+(h/2))
+                found += 1
+
+            elif( game_matchtemplates.match(game_screen_match,151,597,"點擊並開始.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(151+(w/2),597+(h/2))
+                #print(x,y,w,h,150+(w/2),598+(h/2))
+                time.sleep(10)
+                found += 1
+
+            # move加箭頭.png , (205, 613)
+            elif( game_matchtemplates.match(game_screen_match,205,613,"move加箭頭.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(205+(w/2)),int(613+(h/2)+30))  # offset
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            #  隨意走.png , (174, 574)
+            elif( game_matchtemplates.match(game_screen_match,174,574,"隨意走.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(174+(w/2)),int(574+(h/2))) 
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
             elif( game_matchtemplates.match(game_screen_match,153,599,"開始新生活.png",0.9) == True ):
                 x,y,w,h = game_matchtemplates.match_result()
                 if( game_matchtemplates.match(game_screen_match,220,526,"同意.png",0.9) == True ):
@@ -127,9 +184,121 @@ if __name__ == '__main__':
                     game_window.click_left_mouse(153+(w/2),599+(h/2))
                 #print(x,y,w,h,153+(w/2),599+(h/2))
                 found += 1
+
+            # 返回.png , (41, 664)
+            #elif( game_matchtemplates.match(game_screen_match,41,664,"返回.png",0.9) == True ):
+            #    x,y,w,h = game_matchtemplates.match_result()
+            #    game_window.click_left_mouse(int(41+(w/2)),int(664+(h/2)))
+            #    #print(x,y,w,h,25+(w/2),340+(h/2))
+            #    found += 1
+
             elif( game_matchtemplates.match(game_screen_match,339,127,"下箭頭提示.png",0.9) == True ):
                 x,y,w,h = game_matchtemplates.match_result()
                 game_window.click_left_mouse(int(339+(w/2)),int(127+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+            # 隨意走-主選單.png , (212, 579)
+            elif( game_matchtemplates.match(game_screen_match,212,579,"隨意走-主選單.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(212+(w/2)),int(579+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+                time.sleep(5)
+
+            # move.png , (204, 647)
+            elif( game_matchtemplates.match(game_screen_match,204,647,"move.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(204+(w/2)),int(647+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+            # 公告X.png , (25, 93)
+            elif( game_matchtemplates.match(game_screen_match,25,93,"公告X.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(25+(w/2)),int(93+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+            # 使用GP轉蛋.png , (274, 627)
+            elif( game_matchtemplates.match(game_screen_match,274,627,"使用GP轉蛋.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(274+(w/2)),int(627+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            # 扭蛋結束X.png , (13, 662)
+            elif( game_matchtemplates.match(game_screen_match,13,662,"扭蛋結束X.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(13+(w/2)),int(662+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            # 進行轉蛋.png , (175, 489)
+            elif( game_matchtemplates.match(game_screen_match,175,489,"進行轉蛋.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(175+(w/2)),int(489+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            # 瑪哈拉商店.png , (66, 541)
+            elif( game_matchtemplates.match(game_screen_match,66,541,"瑪哈拉商店.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(66+(w/2)),int(541+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+            #shop加箭頭.png , (29, 631)
+            elif( game_matchtemplates.match(game_screen_match,29,631,"shop加箭頭.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(29+(w/2)),int(631+(h/2)+20)) # offset
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+                #food加箭頭.png , (28, 419)
+            elif( game_matchtemplates.match(game_screen_match,28,419,"food加箭頭.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(28+(w/2)),int(419+(h/2)+20)) # offset
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+                #  shower加箭頭.png , (145, 391)
+            elif( game_matchtemplates.match(game_screen_match,145,391,"shower加箭頭.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(145+(w/2)),int(391+(h/2)+20)) # offset
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+                # poop加箭頭.png , (281, 392)
+            elif( game_matchtemplates.match(game_screen_match,281,392,"poop加箭頭.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(281+(w/2)),int(392+(h/2)+20)) # offset
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+                    # 金幣加箭頭.png , (127, 355)
+            elif( game_matchtemplates.match(game_screen_match,127,355,"金幣加箭頭.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(127+(w/2)),int(355+(h/2)+20)) # offset
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+                # 昆蟲.png , (134, 549)
+            elif( game_matchtemplates.match(game_screen_match,134,549,"昆蟲.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(134+(w/2)),int(549+(h/2)-10)) # offset
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+            elif( game_matchtemplates.match(game_screen_match,97,258,"開始新生活-箭頭.png",0.85) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(97+(w/2)),int(258+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+            elif( game_matchtemplates.match(game_screen_match,196,367,"開始新生活-箭頭1.png",0.9) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(196+(w/2)),int(367+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+            elif( game_matchtemplates.match(game_screen_match,163,676,"餵食.png",0.85) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(163+(w/2)),int(676+(h/2)))
                 #print(x,y,w,h,25+(w/2),340+(h/2))
                 found += 1
 
@@ -169,11 +338,25 @@ if __name__ == '__main__':
                 time.sleep(1)
                 #print(x,y,w,h,25+(w/2),340+(h/2))
                 found += 1
-            elif( game_matchtemplates.match(game_screen_match,223,380,"是.png",0.98) == True ):
+            elif( game_matchtemplates.match(game_screen_match,223,380,"是.png",0.90) == True ):
                 x,y,w,h = game_matchtemplates.match_result()
                 game_window.click_left_mouse(int(223+(w/2)),int(380+(h/2)))
                 #print(x,y,w,h,25+(w/2),340+(h/2))
                 found += 1                               
+
+            elif( game_matchtemplates.match(game_screen_match,152,642,"是.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(152+(w/2)),int(642+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
+            # 是.png , (227, 642)                               
+            elif( game_matchtemplates.match(game_screen_match,227,642,"是.png",0.8) == True ):
+                x,y,w,h = game_matchtemplates.match_result()
+                game_window.click_left_mouse(int(227+(w/2)),int(642+(h/2)))
+                #print(x,y,w,h,25+(w/2),340+(h/2))
+                found += 1
+
             elif( game_matchtemplates.match(game_screen_match,141,617,"同意飼主條款.png",0.98) == True ):
                 x,y,w,h = game_matchtemplates.match_result()
                 game_window.click_left_mouse(int(141+(w/2)),int(617+(h/2)))
@@ -196,7 +379,7 @@ if __name__ == '__main__':
                 found += 1
             elif( game_matchtemplates.match(game_screen_match,143,183,"請選擇喜歡的個體.png",0.9) == True ):
                 x,y,w,h = game_matchtemplates.match_result()
-                game_window.click_left_mouse(int(143+(w/2)),int(183+(h/2)+70))
+                game_window.click_left_mouse(int(143+(w/2)),int(183+(h/2)+70))      # offset
                 #print(x,y,w,h,25+(w/2),340+(h/2))
                 found += 1
             elif( game_matchtemplates.match(game_screen_match,88,656,"決定此Livly種類.png",0.9) == True ):
@@ -223,6 +406,8 @@ if __name__ == '__main__':
                 found = 0
                 idle += 1
 
+            if( found > 0 ):
+                idle =0
             print(idle,found)
             
 

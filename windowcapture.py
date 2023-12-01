@@ -101,7 +101,7 @@ class WindowCapture:
         win32gui.PostMessage(self.hwnd, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParamMatch)
         time.sleep(0.1)
         win32gui.PostMessage(self.hwnd, win32con.WM_LBUTTONUP, None , lParamMatch)
-        time.sleep(0.01)
+        time.sleep(0.1)
 
     def input_text(self,string):
         for c in string:
